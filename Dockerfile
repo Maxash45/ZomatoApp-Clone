@@ -1,5 +1,5 @@
-# Use Node.js 16 slim as the base image
-FROM node:16-slim
+# Use Node.js 16 slim as the base image for building the app
+FROM node:16-slim as build
 
 # Set the working directory
 WORKDIR /app
@@ -16,8 +16,14 @@ COPY . .
 # Build the React app
 RUN npm run build
 
-# Expose port 3000 (or the port your app is configured to listen on)
-EXPOSE 3000
+# Use a lightweight web server (e.g., Nginx) to serve the static files
+FROM nginx:stable-alpine
 
-# Start your Node.js server (assuming it serves the React app)
-CMD ["npm", "start"]
+# Copy the built React app from the previous stage
+COPY --from=build /app/build /usr/share/nginx/html
+
+# Expose port 80 (default Nginx port)
+EXPOSE 80
+
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]
